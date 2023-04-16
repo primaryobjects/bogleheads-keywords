@@ -68,6 +68,7 @@ def generate_wordcloud():
     plt.imshow(wc, interpolation='bilinear')
     plt.axis('off')
     plt.savefig(img, format='png')
+    plt.close()
     img.seek(0)
 
     return send_file(img, mimetype='image/png')
