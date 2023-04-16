@@ -54,6 +54,7 @@ def get_keywords_data():
     })
 
 @app.route('/wordcloud.png')
+@cache.cached(timeout=300)  # cache this view for 5 minutes
 def generate_wordcloud():
     # Get the keyword data
     keyword_data = get_keywords_data().json['data']
@@ -70,7 +71,7 @@ def generate_wordcloud():
     img.seek(0)
 
     return send_file(img, mimetype='image/png')
-        
+
 def calculate_keyword_changes(current_week, previous_week):
     keyword_changes = []
     previous_week_dict = {k: (c, urls) for k, c, urls in previous_week}
