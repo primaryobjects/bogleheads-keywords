@@ -1,16 +1,27 @@
 from flask import Flask, jsonify, send_from_directory
+from flask_caching import Cache
 from bogleheads_scraper import get_post_titles, get_keywords
 from database import get_keywords_from_database, save_keywords_to_database
 from mock_db import mock
 import datetime
 
 app = Flask(__name__)
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+
+@app.route('/css/style.css')
+def css():
+    return send_from_directory('css', 'style.css')
+
+@app.route('/scripts/script.js')
+def script():
+    return send_from_directory('scripts', 'script.js')
 
 @app.route('/')
 def index():
     return send_from_directory('.', 'keywords_page.html')
 
 @app.route('/keywords')
+@cache.cached(timeout=300)  # cache this view for 5 minutes
 def get_keywords_data():
     current_date = datetime.date.today()
     current_year = current_date.year
@@ -34,7 +45,10 @@ def get_keywords_data():
     keyword_changes = calculate_keyword_changes(current_keywords, previous_keywords)
 
     # Return the keyword changes as a JSON response
-    return jsonify(keyword_changes)
+    return jsonify({
+        'data': keyword_changes,
+        'cache_datetime': datetime.datetime.now().isoformat()
+    })
 
 def calculate_keyword_changes(current_week, previous_week):
     keyword_changes = []
