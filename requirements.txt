@@ -3,3 +3,4 @@ beautifulsoup4
 nltk
 flask
 flask_caching
+wordcloud

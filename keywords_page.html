@@ -9,27 +9,40 @@
 </head>
 <body>
     <h1>Top 20 Keywords from Bogleheads.org</h1>
-    <div id="pagination_top">
-        <i id="refresh-icon" class="fa-solid fa-rotate-right" onclick="refresh_keywords()" title="Refresh"></i>
-        <div id="pagination_top_container"></div>
+    <div class="tab-container">
+        <ul class="tabs">
+            <li class="tab active" data-tab="keywords">Keywords</li>
+            <li class="tab" data-tab="wordcloud">Word Cloud</li>
+        </ul>
+        <div class="tab-content active" id="keywords">
+            <div id="pagination_top">
+                <i id="refresh-icon" class="fa-solid fa-rotate-right" onclick="refresh_keywords()" title="Refresh"></i>
+                <div id="pagination_top_container"></div>
+            </div>
+            <table id="keywords_table" class="table">
+                <thead>
+                    <tr>
+                        <th>Keyword</th>
+                        <th>Current Month Count</th>
+                        <th>Previous Month Count</th>
+                        <th>Percentage Change</th>
+                        <th>URLs</th>
+                    </tr>
+                </thead>
+                <tbody id="keywords_tbody">
+                </tbody>
+            </table>
+            <div id="pagination_bottom"></div>
+        </div>
+        <div class="tab-content" id="wordcloud">
+            <div class="wordcloud-container">
+                <img src="/wordcloud.png" alt="Word Cloud">
+            </div>
+        </div>
     </div>
-    <div id="last_refresh"></div>
-    <table id="keywords_table" class="table">
-        <thead>
-            <tr>
-                <th>Keyword</th>
-                <th>Current Month Count</th>
-                <th>Previous Month Count</th>
-                <th>Percentage Change</th>
-                <th>URLs</th>
-            </tr>
-        </thead>
-        <tbody id="keywords_tbody">
-        </tbody>
-    </table>
-    <div id="pagination_bottom"></div>
     <div id="footer">
         <p>Data sourced from <a href="https://www.bogleheads.org/" target="_blank" rel="noopener noreferrer">Bogleheads.org</a></p>
+        <div id="last_refresh"></div>
     </div>
     <script src="scripts/script.js"></script>
 </body>

@@ -148,6 +148,20 @@ function display_pagination() {
     }
 }
 
+const tabs = document.querySelectorAll('.tab');
+const tabContents = document.querySelectorAll('.tab-content');
+
+tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        // Remove the active class from all tabs and tab contents
+        tabs.forEach(t => t.classList.remove('active'));
+        tabContents.forEach(tc => tc.classList.remove('active'));
+        // Add the active class to the clicked tab and corresponding tab content
+        tab.classList.add('active');
+        document.querySelector(`#${tab.dataset.tab}`).classList.add('active');
+    });
+});
+
 async function refresh_keywords() {
     // Show the progress spinner icon
     const refreshIcon = document.getElementById('refresh-icon');
@@ -162,7 +176,7 @@ async function refresh_keywords() {
     // Update the last refresh timestamp
     const lastRefreshElement = document.getElementById('last_refresh');
     const timestamp = cacheDate.toLocaleString();
-    lastRefreshElement.innerText = 'Last refresh: ' + timestamp;
+    lastRefreshElement.innerText = 'Updated on ' + timestamp;
 }
 
 window.onload = refresh_keywords;

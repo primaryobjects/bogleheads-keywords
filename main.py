@@ -1,9 +1,12 @@
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, send_file
 from flask_caching import Cache
 from bogleheads_scraper import get_post_titles, get_keywords
 from database import get_keywords_from_database, save_keywords_to_database
 from mock_db import mock
 import datetime
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import io
 
 app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
@@ -50,6 +53,24 @@ def get_keywords_data():
         'cache_datetime': datetime.datetime.now().isoformat()
     })
 
+@app.route('/wordcloud.png')
+def generate_wordcloud():
+    # Get the keyword data
+    keyword_data = get_keywords_data().json['data']
+    # Create a dictionary of keyword frequencies
+    frequencies = {keyword: count for keyword, count, _, _ in keyword_data}
+    # Generate the word cloud
+    wc = WordCloud(width=800, height=400, background_color='white')
+    wc.generate_from_frequencies(frequencies)
+    # Save the word cloud to a PNG image
+    img = io.BytesIO()
+    plt.imshow(wc, interpolation='bilinear')
+    plt.axis('off')
+    plt.savefig(img, format='png')
+    img.seek(0)
+
+    return send_file(img, mimetype='image/png')
+        
 def calculate_keyword_changes(current_week, previous_week):
     keyword_changes = []
     previous_week_dict = {k: (c, urls) for k, c, urls in previous_week}
