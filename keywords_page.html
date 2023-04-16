@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Keywords from Bogleheads.org</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+
+        table {
+            width: 50%;
+            border-collapse: collapse;
+            margin: 20px auto;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #dddddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 20px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #refresh-icon {
+            font-size: 24px;
+            cursor: pointer;
+            color: black;
+            margin-right: 10px; /* Add margin to the right */
+        }
+
+        #refresh-icon:hover {
+            color: #eee;
+        }
+
+        #last_refresh {
+            font-style: italic;
+            font-size: 1.1em;
+            margin-top: 10px;
+            text-align: center; /* Align the text with the table */
+        }
+
+        #pagination button {
+            margin: 0 5px;
+            border-radius: 5px;
+            border: 1px solid #3498db;
+            background-color: #fff;
+            color: #3498db;
+        }
+
+        #pagination button:hover {
+            background-color: #3498db;
+            color: #fff;
+        }
+
+        #pagination button.active {
+            font-weight: bold;
+            background-color: #3498db;
+            color: #fff;
+        }
+
+        #pagination, #pagination_bottom, #pagination_top {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            min-height: 50px; /* Add this line */
+        }
+
+        #footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        td a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        td a:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+
+        .urls-container {
+            position: relative;
+        }
+
+        .urls-toggle {
+            background-color: transparent;
+            border: none;
+            color: #3498db;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-decoration: underline;
+        }
+
+        .urls-toggle:focus {
+            outline: none;
+        }
+
+        .urls-toggle:hover {
+            color: lightblue;
+            background-color: initial;
+        }
+
+        .urls-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            border: 1px solid #dddddd;
+            border-radius: 3px;
+            padding: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            z-index: 1;
+        }
+    </style>
+    <script>
+        let keywords = [];
+        let currentPage = 1;
+        const pageSize = 20;
+
+        async function fetch_keywords() {
+            try {
+                const response = await fetch('/keywords');
+                if (response.ok) {
+                    keywords = await response.json();
+
+                    // Sort the keywords by length (trigrams, bigrams, and then unigrams)
+                    keywords.sort((a, b) => {
+                        const aLength = a[0].split(' ').length;
+                        const bLength = b[0].split(' ').length;
+                        return bLength - aLength;
+                    });
+
+                    display_keywords();
+                } else {
+                    console.error('Failed to fetch keywords:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error fetching keywords:', error);
+            }
+        }
+
+        function display_keywords() {
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const currentPageKeywords = keywords.slice(startIndex, endIndex);
+
+            const tbody = document.getElementById('keywords_tbody');
+            tbody.innerHTML = '';
+
+            display_pagination();
+            currentPageKeywords.forEach(keyword_data => {
+                const tr = document.createElement('tr');
+
+                // Keyword and Current Month Count
+                for (let i = 0; i < 2; i++) {
+                    const td = document.createElement('td');
+                    td.innerText = keyword_data[i];
+                    tr.appendChild(td);
+                }
+
+                // Calculate the previous month count
+                const change = keyword_data[2];
+                const previous_count = keyword_data[1] - change;
+
+                // Add the previous month count cell
+                const previousMonthCountCell = document.createElement('td');
+                previousMonthCountCell.innerText = previous_count;
+                tr.appendChild(previousMonthCountCell);
+
+                // Calculate the percentage change
+                const percentage_change = (previous_count === 0) ? "N/A" : (change * 100 / previous_count).toFixed(2) + '%';
+
+                // Add the percentage change cell
+                const percentageChangeCell = document.createElement('td');
+                percentageChangeCell.innerText = percentage_change;
+                if (percentage_change !== "N/A") {
+                    percentageChangeCell.style.color = change >= 0 ? 'green' : 'red';
+                }
+                tr.appendChild(percentageChangeCell);
+
+                // Add the URLs cell
+                const urlsCell = document.createElement('td');
+                const postIdLinks = keyword_data[3].map(url => {
+                    const urlSearchParams = new URLSearchParams(url.split('?')[1]);
+                    const postId = urlSearchParams.get('t');
+                    return `<a href="${url}" target="_blank">${postId}</a>`;
+                }).join(', '); // Separate the links with commas
+
+                urlsCell.innerHTML = `
+                    <div class="urls-container">
+                        <button class="urls-toggle" onclick="toggleUrls(event)">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="urls-content" style="display: none;">${postIdLinks}</div>
+                    </div>
+                `;
+                tr.appendChild(urlsCell);
+
+                tbody.appendChild(tr);
+            });
+
+            display_pagination();
+        };
+
+        function toggleUrls(event) {
+            const button = event.target.closest('.urls-toggle');
+            const icon = button.querySelector('i');
+            const urlsContent = button.nextElementSibling;
+
+            if (urlsContent.style.display === 'none') {
+                urlsContent.style.display = 'block';
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                urlsContent.style.display = 'none';
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+
+      function display_pagination() {
+            const totalPages = Math.ceil(keywords.length / pageSize);
+
+            // A helper function to create a pagination button
+            function createPaginationButton(i) {
+                const button = document.createElement('button');
+                button.innerText = i;
+                button.onclick = function () {
+                    currentPage = i;
+                    display_keywords();
+                };
+
+                if (i === currentPage) {
+                    button.classList.add('active');
+                }
+
+                return button;
+            }
+
+            // Populate the top and bottom pagination containers
+            const paginationTopContainer = document.getElementById('pagination_top_container');
+            const paginationBottomContainer = document.getElementById('pagination_bottom');
+            paginationTopContainer.innerHTML = '';
+            paginationBottomContainer.innerHTML = '';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const buttonTop = createPaginationButton(i);
+                const buttonBottom = createPaginationButton(i);
+                paginationTopContainer.appendChild(buttonTop);
+                paginationBottomContainer.appendChild(buttonBottom);
+            }
+        }
+
+        function refresh_keywords() {
+            fetch_keywords();
+
+            // Update the last refresh timestamp
+            const lastRefreshElement = document.getElementById('last_refresh');
+            const now = new Date();
+            const timestamp = now.toLocaleString();
+            lastRefreshElement.innerText = 'Last refresh: ' + timestamp;
+        }
+
+        window.onload = refresh_keywords;
+    </script>
+</head>
+<body>
+    <h1>Top 20 Keywords from Bogleheads.org</h1>
+    <div id="pagination_top">
+        <i id="refresh-icon" class="fa-solid fa-rotate-right" onclick="refresh_keywords()" title="Refresh"></i>
+        <div id="pagination_top_container"></div>
+    </div>
+    <div id="last_refresh"></div>
+    <table id="keywords_table" class="table">
+        <thead>
+            <tr>
+                <th>Keyword</th>
+                <th>Current Month Count</th>
+                <th>Previous Month Count</th>
+                <th>Percentage Change</th>
+                <th>URLs</th>
+            </tr>
+        </thead>
+        <tbody id="keywords_tbody">
+        </tbody>
+    </table>
+    <div id="pagination_bottom"></div>
+    <div id="footer">
+        <p>Data sourced from <a href="https://www.bogleheads.org/" target="_blank" rel="noopener noreferrer">Bogleheads.org</a></p>
+    </div>
+</body>
+</html>
